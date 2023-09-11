@@ -1,0 +1,370 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
+<dictionary title="Dictionary">
+    <suite name="Argonaut" code="©!Ag" description="Commands to handle arguments in command-line AppleScript/ASObjC scripts.">
+        <enumeration name="error mode" code="!Aem" description="Mode governing how errors are handled">
+            <enumerator name="raise errors" code="*AeR" description="In this mode, missing and invalid arguments will raise AppleScript errors. This does not look as nice in the Terminal window, but it is more consistent with system standards."/>
+            <enumerator name="send to log" code="*AeL" description="In this mode, missing and invalid arguments will log well-formatted messages to stderr."/>
+            <enumerator name="control with argument" code="*AeC" description="In this mode, error handling is controlled by the 'errorMode' argument. The argument is automatically added and handled by Argonaut."/>
+        </enumeration>
+        <enumeration name="argument state" code="!Aas" description="Indicates whether an argument is present and whether it is required to be.">
+            <enumerator name="valid" code="*AsV" description="Present and and has valid type."/>
+            <enumerator name="invalid" code="*AsI" description="Present, but has the wrong type."/>
+            <enumerator name="excluded" code="*AsE" description="Not present and not required."/>
+            <enumerator name="missing" code="*AsM" description="Not present but required to be."/>
+        </enumeration>
+        <enumeration name="argument type" code="!Aat" description="Argument type. Argonaut will automatically convert valid values into their corresponding type class (e.g., path strings -> POSIX file objects)." inline="0">
+            <enumerator name="ArgAny" code="*AtA" description="Any type."/>
+            <enumerator name="ArgAnyList" code="AtAl" description="List of any types."/>
+            <enumerator name="ArgInteger" code="*AtI" description="Integer type."/>
+            <enumerator name="ArgIntegerList" code="AtIl" description="List of integer types."/>
+            <enumerator name="ArgDecimal" code="*AtD" description="Decimal type.">
+                <synonym name="ArgReal"/>
+                <synonym name="ArgNumber"/>
+            </enumerator>
+            <enumerator name="ArgDecimalList" code="AtDl" description="List of decimal types."/>
+            <enumerator name="ArgBoolean" code="*AtB" description="Boolean type."/>
+            <enumerator name="ArgBooleanList" code="AtBl" description="List of boolean types."/>
+            <enumerator name="ArgPath" code="*AtP" description="File/folder path type. Valid values will automatically convert to instances of AppleScript's POSIX file class."/>
+            <enumerator name="ArgPathList" code="AtPl" description="List of path types."/>
+            <enumerator name="ArgURL" code="*AtU" description="URL type. Valid values will automatically convert to instances of AppleScript's URL class, falling back to text if, for example, the scheme used is unknown to AppleScript.">
+                <synonym name="ArgLink"/>
+            </enumerator>
+            <enumerator name="ArgURLList" code="AtUl" description="List of URL types."/>
+            <enumerator name="ArgJSON" code="*AtJ" description="Stringified JSON type."/>
+            <enumerator name="ArgJSONList" code="AtJl" description="List of stringified JSON types."/>
+            <enumerator name="ArgFlag" code="*AtF" description="Flag type. Only checks for the presence of the argument, not any associated value."/>
+            <enumerator name="ArgList" code="*AtL" description="Abstract type for any list type. Use this only for the 'filter arguments' command to match arguments accepting any list type. Giving ArgList as the type for an argument is that same as using ArgAnyList."/>
+        </enumeration>
+        <command name="add argument" code="©!Ag©!ca" description="Create an argument object for use throughout the script.">
+            <direct-parameter description="The name of the argument.">
+                <type type="text"/>
+            </direct-parameter>
+            <parameter name="required" code="!car" description="Whether the argument is required or not." type="boolean" optional="yes" />
+            <parameter name="type" code="!cat" description="The data type expected for the argument. This configures type-checking rules automatically. To accept multiple types for the value, provide a list, e.g.: {ArgPath, ArgURL}." optional="yes">
+                <type type="argument type"/>
+                <type type="class"/>
+                <type type="text"/>
+                <type type="argument type" list="yes"/>
+                <type type="class" list="yes"/>
+                <type type="text" list="yes"/>
+                <documentation>
+                  <html>
+                      <![CDATA[
+                          <p>Accepted AppleScript classes: <span style="color:blue;"><i>any</i></span>, <span style="color:blue;"><i>integer</i></span>, <span style="color:blue;"><i>number</i></span>, <span style="color:blue;"><i>real</i></span>, <span style="color:blue;"><i>boolean</i></span>, <span style="color:blue;"><i>URL</i></span>, or <span style="color:blue;"><i>list</i></span></p>
+                          <p>Accepted text strings: 'any', 'anything', 'integer', 'int', 'decimal', 'number', 'real', 'boolean', 'bool', 'url', 'link', 'path', or 'flag'</p>
+                      ]]>
+                  </html>
+                 </documentation>
+            </parameter>
+            <parameter name="accepted values" code="!cva" description="A list of exact values that are accepted for this argument." optional="yes">
+                <type type="any" list="yes"/>
+            </parameter>
+            <parameter name="default value" code="!cdv" description="The default value for the argument if none is provided by the user." type="any" optional="yes"/>
+            <parameter name="help text" code="!cah" description="The brief help text to display when this argument is not used properly" type="text" optional="yes" />
+            <parameter name="details" code="!cad" description="The extended, detailed help text to display when used invoke the 'help' subcommand on this argument." type="text" optional="yes" />
+            <parameter name="flag" code="!caf" description="A shorthand flag that users can use to specify this argument. For example, the first letter of its name." type="text" optional="yes" />
+            <parameter name="dependencies" code="!cdd" description="List of arguments (or argument names) that the argument must co-occur with">
+                <type type="text" list="yes"/>
+                <type type="argument" list="yes"/>
+            </parameter>
+            <parameter name="action" code="!caa" description="The handler to run when the argument is detected, valid or not." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="validator" code="!cvd" description="The handler to check the validity of the argument's value. If none is specified, automatic checking is done based on the argument's type." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <result description="A record containing details of the argument. Use this in other commands to reference the argument.">
+                <type type="argument"/>
+            </result>
+        </command>
+        <command name="initialize argument parser" code="©!Ag©!in" description="Initializes the argument parser with the given configuration settings.">
+            <synonym name="init arg parser"/>
+            <synonym name="init arg parse"/>
+            <synonym name="initialize parser"/>
+            <synonym name="init parser"/>
+            <parameter name="configuration" code="!ipc" description="Global configuration settings for argument parsing." type="parser configuration" optional="yes"/>
+        </command>
+        
+        <command name="handle arguments" code="©!Ag©!ha" description="Handle arguments at various states.">
+            <synonym name="handle args"/>
+            <direct-parameter description="The list of arguments passed to the script.">
+                <type type="argument" list="yes"/>
+            </direct-parameter>
+            <parameter name="when no errors" code="!hne" description="A handler to run when there are no errors detected by the argument parser. Some arguments might not be present, but they are ones marked as optional." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when all valid" code="!hav" description="A handler to run when ALL arguments are valid." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when all invalid" code="!hai" description="A handler to run when ALL arguments are invalid." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when all excluded" code="!hae" description="A handler to run when ALL arguments are excluded." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when all missing" code="!ham" description="A handler to run when ALL arguments are missing." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when any valid" code="!hva" description="A handler to run when ANY arguments are valid. Only the valid arguments are passed to the handler." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when any invalid" code="!hia" description="A handler to run when ANY arguments are invalid. Only the invalid arguments are passed to the handler." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when any excluded" code="!hea" description="A handler to run when ANY arguments are excluded. Only the invalid arguments are passed to the handler." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <parameter name="when any missing" code="!hma" description="A handler to run when ANY arguments are missing. Only the invalid arguments are passed to the handler." optional="yes">
+                <type type="handler"/>
+                <type type="script"/>
+            </parameter>
+            <result description="The value returned from the last handler run.">
+                <type type="any"/>
+            </result>
+        </command>
+        <command name="check arguments" code="©!Ag©!cm" description="Checks the presence and validity of all arguments. This is automatically called when using the handle arguments command.">
+            <synonym name="check args"/>
+            <direct-parameter description="The list of arguments passed to the script.">
+                <type type="argument" list="yes"/>
+            </direct-parameter>
+            <result description="The list of arguments, each with a populated 'status' property.">
+                <type type="argument" list="yes"/>
+            </result>
+            <documentation>
+                <html>
+                    <![CDATA[
+                        This is called automatically when using <i>handle arguments</i>.
+                    ]]>
+                </html>
+            </documentation>
+        </command>
+        <command name="check for argument" code="©!Ag©!c1" description="Checks the existence and type of the argument according to its settings.">
+            <synonym name="check for arg"/>
+            <synonym name="check arg"/>
+            <direct-parameter description="The argument to check.">
+                <type type="argument"/>
+            </direct-parameter>
+            <parameter name="in args" code="!cav" description="The list of arguments passed to the script." type="list" optional="no">
+                <synonym name="in"/>
+            </parameter>
+            <parameter name="at index" code="!cai" description="The index in the list of arguments passed to the script at which to validate the argument." type="integer" optional="yes"/>
+            <result description="The status object describing the argument's presence and value.">
+                <type type="argument status" />
+            </result>
+            <documentation>
+              <html>
+                  <![CDATA[
+                      This is called automatically once for each argument when using <i>check arguments</i>.
+                  ]]>
+              </html>
+             </documentation>
+        </command>
+        <command name="filter arguments" code="©!Ag©!Fi" description="Filters the list of arguments by one or more criteria.">
+            <synonym name="missing args"/>
+            <direct-parameter description="An optional list of arguments to get the names of. If none if provided, the names of all arguments will be returned." optional="yes">
+                <type type="argument" list="yes"/>
+            </direct-parameter>
+            <parameter name="by state" code="!cfs" description="The state that all returned arguments must be in." optional="yes">
+                <type type="argument state"/>
+            </parameter>
+            <parameter name="by type" code="!cft" description="The type that all returned arguments must be of." optional="yes">
+                <type type="argument type"/>
+            </parameter>
+            <parameter name="required" code="!cfr" description="Set to true to match required arguments only." optional="yes">
+                <type type="boolean"/>
+            </parameter>
+            <parameter name="has value" code="!cfv" description="Set to true to only match arguments that have some non-empty value." optional="yes">
+                <type type="boolean"/>
+            </parameter>
+            <parameter name="using custom filter" code="!cvf" description="A handler or script object that filters arguments based on some programmatic analysis. The handler must accept If a script object is used, it must define a handler named ''" optional="yes">
+                <type type="script"/>
+                <type type="handler"/>
+            </parameter>
+            <result description="The ordered list of arguments.">
+                <type type="argument" list="yes"/>
+            </result>
+        </command>
+        <command name="list arguments" code="©!Ag©!lS" description="Gets the list of all configured arguments.">
+            <synonym name="settings"/>
+            <result description="The ordered list of argument configurations.">
+                <type type="argument" list="yes"/>
+            </result>
+        </command>
+        <command name="argument names" code="©!Ag©!an" description="Gets the list of all configured argument names.">
+            <synonym name="argnames"/>
+            <direct-parameter description="An optional list of arguments to get the names of. If none if provided, the names of all arguments will be returned." optional="yes">
+                <type type="argument" list="yes"/>
+            </direct-parameter>
+            <result description="The ordered list of argument names.">
+                <type type="text" list="yes"/>
+            </result>
+        </command>
+        <command name="argument types" code="©!Ag©!at" description="Gets the list of all configured argument types.">
+            <synonym name="argtypes"/>
+            <direct-parameter description="An optional list of arguments to get the names of. If none if provided, the names of all arguments will be returned." optional="yes">
+                <type type="argument" list="yes"/>
+            </direct-parameter>
+            <result description="The ordered list of argument types.">
+                <type type="argument type" list="yes"/>
+            </result>
+        </command>
+        
+        <record-type name="parser configuration" code="!Agp" description="Global configuration settings for the argument parser.">
+            <property name="command name" code="Agpn" type="text" description="The full name of the commandline script."/>
+            <property name="short description" code="Apsd" type="text" description="A short, one-line description of the script."/>
+            <property name="long description" code="Apld" type="text" description="A longer, multi-paragraph description of the script."/>
+            <property name="global help text" code="Agph" type="text" description="Text that displays when users run the script with only the '--help' or '-h' flags."/>
+            <property name="author" code="Agat" type="text" description="The name of the author of the script to display in the extended help text."/>
+            <property name="footer text" code="Agft" description="Text that displays at the very bottom of the extended help text."/>
+            <property name="allow positional arguments" code="Agpp" type="boolean" description="Whether to allow users to provide arguments positionally, without using flags or specifying an argument name"/>
+            <property name="error mode" code="Agem" type="error mode" description="How to handle errors resulting from invalid or missing arguments."/>
+        </record-type>
+        <record-type name="argument" code="!Aga" description="Configuration settings for a specific argument.">
+            <property name="name" code="Agnm" type="text"
+                description="The name of the argument.">
+            </property>
+            <property name="required" code="Agru" type="boolean"
+                description="The rule governing whether the argument is required or not.">
+            </property>
+            <property name="type" code="Agty" description="The enforced type of the argument.">
+                <type type="argument type"/>
+                <type type="text"/>
+                <type type="class"/>
+            </property>
+            <property name="accepted values" code="Aacv" description="The list of exact values accepted for this argument">
+                <type type="any" list="yes"/>
+            </property>
+            <property name="default value" code="Agdv" type="any" description="The default value for the argument if none is provided by the user."/>
+            <property name="flag" code="Agfl" type="text"
+                description="The shorthand flag for the argument.">
+            </property>
+            <property name="dependencies" code="Agfd" description="List of names of arguments that this argument must co-occur with.">
+                <type type="text" list="yes"/>
+            </property>
+            <property name="position" code="Agps" type="integer" description="The position of the argument, used when flags are not specified."/>
+            <property name="help text" code="Aght" type="text"
+                description="The brief help text for the argument to display when it is misused.">
+            </property>
+            <property name="status" code="Agst" type="argument status" description="A record describing the current status of the argument"/>
+            <property name="details" code="Agdt" type="text"
+                description="The detailed help text for the argument to display when the 'help' subcommand is used on the argument.">
+            </property>
+            <property name="action" code="Agac" description="The handler the run when the argument is detected.">
+                <type type="handler"/>
+                <type type="script"/>
+            </property>
+            <property name="validator" code="Agav" description="The handler to check the validity of the argument's value.">
+                <type type="handler"/>
+                <type type="script"/>
+            </property>
+        </record-type>
+        <record-type name="argument status" code="!Ags" description="Information about an argument found (or not found) in the list of arguments passed to the script.">
+            <property name="name" code="Agsn" type="text" description="The name of the argument that this status describes."/>
+            <property name="state" code="Agss" type="argument state" description="The state of existence of the argument in the list of arguments passed to the script."/>
+            <property name="error reason" code="Ager" type="text" description="If the state is invalid, then this is a description of why the argument is invalid. Otherwise, it is an empty string."/>
+            <property name="value" code="Agsv" type="any" description="The value of the argument."/>
+            <property name="span" code="Agsp" type="list" description="The start and stop indices of the argument's value."/>
+        </record-type>
+        <record-type name="action parameters" code="!ARp" description="The parameters passed to action handlers when their associated arguments is finished being parsed.">
+            <property name="argument" code="agRa" type="argument" description="The argument with a populated 'status' property."/>
+            <property name="state" code="agRs" type="argument state" description="The existence state of the argument."/>
+            <property name="value" code="agRv" type="any" description="The parsed and potentially augmented value of the argument."/>
+            <documentation>
+              <html>
+                  <![CDATA[
+                      <div style="margin-top:8px;background-color:#eee;padding:8px;">
+                          <p>EXAMPLE SCRIPT: Define an action handler wrapped in a script object (Recommended over a standalone handler).</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>script </b><span style="color:green;">MyActionHandler</span></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>on </b><span style="color:green;">runAction</span>(<span style="color:green;">theArguments</span>, <span style="color:green;">theState</span>, <span style="color:green;">theValue</span>)</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:4.5em;"><b>set my </b><span style="color:green;">fileScopedData</span> <b>to</b> 10</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>end </b><span style="color:green;">runAction</span></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>end script</b></p>
+                      </div>
+                  ]]>
+              </html>
+             </documentation>
+        </record-type>
+        <record-type name="validator parameters" code="!AVp">
+            <property name="argument" code="aVpa" type="argument" description="The argument to validate."/>
+            <property name="value" code="aVpv" type="any" description="The current value of the argument (you may augment the value during the validation process)."/>
+            <documentation>
+              <html>
+                  <![CDATA[
+                      <div style="margin-top:8px;background-color:#eee;padding:8px;">
+                          <p>EXAMPLE SCRIPT: Define a validation handler.</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>on </b><span style="color:green;">isEven</span>(<span style="color:green;">theArgument</span>, <span style="color:green;">theValue</span>)</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>set </b><span style="color:green;">isValid</span> <b>to</b> <i><span style="color:blue;">invalid</span></i></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>if </b><span style="color:green;">theValue</span> <b>mod</b> 2 <b>is</b> 0 <b>then set</b> <span style="color:green;">isValid</span> <b>to</b> <i><span style="color:#6600CC;">true</span></i></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>return </b>{<span style="color:blue;">validity</span>:<span style="color:green;">isValid</span>, <span style="color:blue;">value</span>:<span style="color:green;">theValue</span>}</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>end </b><span style="color:green;">isEven</span></p>
+                      </div>
+                  ]]>
+              </html>
+             </documentation>
+        </record-type>
+        <record-type name="validation result" code="!Agv" description="The return value of a validation handler.">
+            <property name="validity" code="Agvv" type="argument state" description="Whether the argument's value is value or invalid."/>
+            <property name="value" code="Agvu" type="any" description="The value of the argument. (This allows validation handlers to augment the value as needed.)"/>
+        </record-type>
+        <record-type name="arguments handler parameters" code="!AHa">
+            <property name="arguments" code="agHa" description="The list of arguments.">
+                <type type="argument" list="yes"/>
+            </property>
+            <property name="summary" code="agHs" type="record" description="A record mapping argument names to their parsed value, e.g. {arg1:value1, arg2:value2}"/>
+            <documentation>
+              <html>
+                  <![CDATA[
+                      <div style="margin-top:8px;background-color:#eee;padding:8px;">
+                          <p>EXAMPLE SCRIPT: Define an argument handler script object (Recommended over a standalone handler).</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>script </b><span style="color:green;">MyResultHandler</span></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>on </b><span style="color:green;">handle</span>(<span style="color:green;">theArguments</span>, <span style="color:blue;">summary</span>)</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:4.5em;"><b>set my </b><span style="color:green;">fileScopedData</span> <b>to</b> 3</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>end </b><span style="color:green;">handle</span></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>end script</b></p>
+                      </div>
+                  ]]>
+              </html>
+             </documentation>
+        </record-type>
+        <record-type name="custom filter parameters" code="!ACf" description="The parameters that a custom filter handler or script object must accept. The return value must be a boolean.">
+            <property name="argument" code="aCfa" type="argument"/>
+            <documentation>
+              <html>
+                  <![CDATA[
+                      <div style="margin-top:8px;background-color:#eee;padding:8px;">
+                          <p>EXAMPLE SCRIPT: Define a custom filter handler.</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>on </b><span style="color:green;">noDependencies</span>(<span style="color:green;">theArgument</span>)</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>return </b><span style="color:blue;">length</span> <b>of</b> <span style="color:green;">theArgument's dependencies</span> <b>is</b> 0</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>end </b><span style="color:green;">noDependencies</span></p>
+                      </div>
+                  ]]>
+              </html>
+             </documentation>
+            <documentation>
+              <html>
+                  <![CDATA[
+                      <div style="margin-top:8px;background-color:#eee;padding:8px;">
+                          <p>EXAMPLE SCRIPT: Define a custom filter script object.</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>script </b><span style="color:green;">MyCustomFilter</span></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>on </b><span style="color:green;">passesFilter</span>(<span style="color:green;">theArgument</span>)</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:4.5em;"><b>return </b><span style="color:blue;">length</span> <b>of</b> <span style="color:green;">theArgument's dependencies</span> <b>is</b> 0</p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:3.0em;"><b>end </b><span style="color:green;">passesFilter</span></p>
+                          <p style="font-family:Verdana, sans-serif;text-indent:1.5em;"><b>end script</b></p>
+                      </div>
+                  ]]>
+              </html>
+             </documentation>
+        </record-type>
+    </suite>
+</dictionary>

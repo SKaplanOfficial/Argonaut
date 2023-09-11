@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleIdentifier</key>
+	<string>com.apple.ScriptEditor.id.test</string>
+	<key>CFBundleName</key>
+	<string>Argonaut</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>© 2023 Stephen Kaplan</string>
+	<key>OSAScriptingDefinition</key>
+	<string>ScriptingDictionary</string>
+	<key>WindowState</key>
+	<dict>
+		<key>bundleDividerCollapsed</key>
+		<true/>
+		<key>bundlePositionOfDivider</key>
+		<real>0.0</real>
+		<key>dividerCollapsed</key>
+		<false/>
+		<key>eventLogLevel</key>
+		<integer>0</integer>
+		<key>name</key>
+		<string>ScriptWindowState</string>
+		<key>positionOfDivider</key>
+		<real>791</real>
+		<key>savedFrame</key>
+		<string>900 110 900 1014 0 0 1800 1125 </string>
+		<key>selectedTab</key>
+		<string>description</string>
+	</dict>
+</dict>
+</plist>
